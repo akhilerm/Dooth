@@ -1,7 +1,14 @@
 package com.akhilerm.dooth;
 
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.provider.Telephony;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -18,6 +25,7 @@ import com.amazon.identity.auth.device.api.authorization.ProfileScope;
 import com.amazon.identity.auth.device.api.authorization.Scope;
 import com.amazon.identity.auth.device.api.authorization.User;
 import com.amazon.identity.auth.device.api.workflow.RequestContext;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -25,10 +33,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getName();
+
+    final int MY_PERMISSIONS_REQUEST_SEND_SMS=20;
 
     private RequestContext requestContext;
     private String name;
@@ -40,7 +51,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        requestContext = RequestContext.create(this);
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                android.Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{android.Manifest.permission.SEND_SMS},
+                    MY_PERMISSIONS_REQUEST_SEND_SMS);
+        }
+        /*requestContext = RequestContext.create(this);
         requestContext.registerListener(new AuthorizeListener() {
             @Override
             public void onSuccess(AuthorizeResult authorizeResult) {
@@ -56,20 +74,21 @@ public class MainActivity extends AppCompatActivity {
             public void onCancel(AuthCancellation authCancellation) {
                 Toast.makeText(MainActivity.this, "Auth Cancelled", Toast.LENGTH_SHORT).show();
             }
-        });
+        });*/
         ImageButton loginButton = findViewById(R.id.login_with_amazon);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AuthorizationManager.authorize(new AuthorizeRequest
+                /*AuthorizationManager.authorize(new AuthorizeRequest
                         .Builder(requestContext)
                         .addScopes(ProfileScope.profile(), ProfileScope.postalCode())
-                        .build());
+                        .build());*/
             }
         });
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference databaseReference = database.getReference("users");
-        databaseReference.child("users").child("pranavshenoy06gmailcom").addValueEventListener(new ValueEventListener() {
+
+        /*databaseReference.child("pranavshenoy07").child("pending").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 String value = dataSnapshot.getValue(String.class);
@@ -81,6 +100,33 @@ public class MainActivity extends AppCompatActivity {
                 // Failed to read value
                 Log.w(TAG, "Failed to read value.", databaseError.toException());
             }
+        });*/
+
+        databaseReference.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Map<String, Object> messageBody = (Map<String, Object>)
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
         });
 
     }
@@ -88,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        requestContext.onResume();
+        //requestContext.onResume();
     }
 
     private void fetchUserProfile() {
@@ -126,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, email, Toast.LENGTH_SHORT).show();
     }
 
-    @Override
+    /*@Override
     protected void onStart(){ super.onStart();
         Scope[] scopes = { ProfileScope.profile(), ProfileScope.postalCode() };
         AuthorizationManager.getToken(this, scopes, new Listener<AuthorizeResult, AuthError>() {
@@ -134,18 +180,41 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(AuthorizeResult result) {
                 if (result.getAccessToken() != null) {
-                    /* The user is signed in */
+                    *//* The user is signed in *//*
                 } else {
-                    /* The user is not signed in */
+                    *//* The user is not signed in *//*
                 }
             }
 
             @Override
             public void onError(AuthError ae) {
-                /* The user is not signed in */
+                *//* The user is not signed in *//*
             }
         });
+    }*/
+
+    private boolean sendSMS(String phoneNumber, String message) {
+        SmsManager smsManager = SmsManager.getDefault();
+        smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+        return true;
     }
 
-
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_SEND_SMS: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //Permission Granted
+                } else {
+                    //Permission Denied
+                    Toast.makeText(MainActivity.this, "App does not have enough permissions", Toast.LENGTH_SHORT).show();
+                }
+            }
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
 }
