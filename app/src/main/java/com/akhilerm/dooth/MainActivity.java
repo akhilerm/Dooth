@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         this.email=email;
         this.account=account;
         this.zipcode=zipcode;
+        Toast.makeText(this, email, Toast.LENGTH_SHORT).show();
     }
 
     @Override
