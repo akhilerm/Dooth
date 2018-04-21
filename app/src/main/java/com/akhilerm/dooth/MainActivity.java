@@ -102,10 +102,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });*/
 
-        databaseReference.addChildEventListener(new ChildEventListener() {
+        databaseReference.child("pranavshenoy07").child("pending").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Map<String, Object> messageBody = (Map<String, Object>)
+                Map<String, Object> messageBody = (Map<String, Object>) dataSnapshot.getValue();
+                for (Map.Entry<String, Object> message : messageBody.entrySet()){
+                    Log.d(TAG + "Keys", message.getKey());
+                }
             }
 
             @Override
