@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private String email;
     private String account;
     private String zipcode;
+    private boolean isLoggedin = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
                     new String[]{android.Manifest.permission.SEND_SMS},
                     MY_PERMISSIONS_REQUEST_SEND_SMS);
         }
-        /*requestContext = RequestContext.create(this);
+        requestContext = RequestContext.create(this);
         requestContext.registerListener(new AuthorizeListener() {
             @Override
             public void onSuccess(AuthorizeResult authorizeResult) {
@@ -74,41 +75,46 @@ public class MainActivity extends AppCompatActivity {
             public void onCancel(AuthCancellation authCancellation) {
                 Toast.makeText(MainActivity.this, "Auth Cancelled", Toast.LENGTH_SHORT).show();
             }
-        });*/
+        });
         ImageButton loginButton = findViewById(R.id.login_with_amazon);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                /*AuthorizationManager.authorize(new AuthorizeRequest
+                AuthorizationManager.authorize(new AuthorizeRequest
                         .Builder(requestContext)
                         .addScopes(ProfileScope.profile(), ProfileScope.postalCode())
-                        .build());*/
+                        .build());
             }
         });
+
+    }
+
+    private void firebase() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference databaseReference = database.getReference("users");
 
-        /*databaseReference.child("pranavshenoy07").child("pending").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String value = dataSnapshot.getValue(String.class);
-                Log.d(TAG, "Value is: " + value);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // Failed to read value
-                Log.w(TAG, "Failed to read value.", databaseError.toException());
-            }
-        });*/
-
-        databaseReference.child("pranavshenoy07").child("pending").addChildEventListener(new ChildEventListener() {
+        databaseReference.child(email).child("pending").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Map<String, Object> messageBody = (Map<String, Object>) dataSnapshot.getValue();
-                for (Map.Entry<String, Object> message : messageBody.entrySet()){
-                    Log.d(TAG + "Keys", message.getKey());
+                boolean sendMessage = false;
+                String message="";
+                String phone="";
+                for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                    if (ds.getKey().equals("status")) {
+                        if (ds.getValue().equals("0")) {
+                            sendMessage = true;
+                        }
+                    }
+                    else if (ds.getKey().equals("message")) {
+                        message = ds.getValue().toString();
+                    }
+                    else if (ds.getKey().equals("phone")) {
+                        phone = ds.getValue().toString();
+                    }
                 }
+                Log.d(TAG, phone + ":"+message);
+                sendSMS(phone, message);
+                //setvLue to 1;
             }
 
             @Override
@@ -137,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        //requestContext.onResume();
+        requestContext.onResume();
     }
 
     private void fetchUserProfile() {
@@ -155,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         updateProfileData(name, email, account, zipcode);
+                        firebase();
                     }
                 });
             }
@@ -169,13 +176,14 @@ public class MainActivity extends AppCompatActivity {
 
     private synchronized void updateProfileData(String name, String email, String account, String zipcode) {
         this.name=name;
-        this.email=email;
+        this.email=email.split("@")[0];
         this.account=account;
         this.zipcode=zipcode;
+        isLoggedin = true;
         Toast.makeText(this, email, Toast.LENGTH_SHORT).show();
     }
 
-    /*@Override
+    @Override
     protected void onStart(){ super.onStart();
         Scope[] scopes = { ProfileScope.profile(), ProfileScope.postalCode() };
         AuthorizationManager.getToken(this, scopes, new Listener<AuthorizeResult, AuthError>() {
@@ -183,18 +191,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(AuthorizeResult result) {
                 if (result.getAccessToken() != null) {
-                    *//* The user is signed in *//*
+                     //The user is signed in
                 } else {
-                    *//* The user is not signed in *//*
+                     //The user is not signed in
                 }
             }
 
             @Override
             public void onError(AuthError ae) {
-                *//* The user is not signed in *//*
+                 //The user is not signed in
             }
         });
-    }*/
+    }
 
     private boolean sendSMS(String phoneNumber, String message) {
         SmsManager smsManager = SmsManager.getDefault();
