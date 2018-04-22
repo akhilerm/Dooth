@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void firebase() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference databaseReference = database.getReference("users");
+        final DatabaseReference databaseReference = database.getReference("users");
 
         databaseReference.child(email).child("pending").addChildEventListener(new ChildEventListener() {
             @Override
@@ -101,9 +101,10 @@ public class MainActivity extends AppCompatActivity {
                 String phone="";
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     if (ds.getKey().equals("status")) {
-                        if (ds.getValue().equals("0")) {
+                        if (Integer.parseInt(ds.getValue().toString())==0) {
                             sendMessage = true;
                         }
+                        Log.d(TAG, sendMessage + ":" + ds.getValue());
                     }
                     else if (ds.getKey().equals("message")) {
                         message = ds.getValue().toString();
@@ -113,7 +114,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 Log.d(TAG, phone + ":"+message);
-                sendSMS(phone, message);
+                if (sendMessage) {
+                    Log.d(TAG, "SENDING");
+                    sendSMS(phone, message);
+
+                }
                 //setvLue to 1;
             }
 
@@ -205,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean sendSMS(String phoneNumber, String message) {
+        Log.d(TAG, "sending sms");
         SmsManager smsManager = SmsManager.getDefault();
         smsManager.sendTextMessage(phoneNumber, null, message, null, null);
         return true;
