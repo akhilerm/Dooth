@@ -103,8 +103,8 @@ public class MainActivity extends AppCompatActivity {
                     if (ds.getKey().equals("status")) {
                         if (Integer.parseInt(ds.getValue().toString())==0) {
                             sendMessage = true;
+                            databaseReference.child(email).child("pending").child(dataSnapshot.getKey()).child("status").setValue("1");
                         }
-                        Log.d(TAG, sendMessage + ":" + ds.getValue());
                     }
                     else if (ds.getKey().equals("message")) {
                         message = ds.getValue().toString();
